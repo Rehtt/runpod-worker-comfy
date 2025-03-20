@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
   git \
   wget \
   libgl1 \
+  aria2 \
   && ln -sf /usr/bin/python3.10 /usr/bin/python \
   && ln -sf /usr/bin/pip3 /usr/bin/pip \
   && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
@@ -55,9 +56,9 @@ RUN comfy --workspace /comfyui node registry-install comfyui_fluxmod
 # Change working directory to ComfyUI
 WORKDIR /comfyui
 
-RUN mkdir -p models/clip && wget -O models/clip/t5xxl_fp16.safetensors https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors
-RUN mkdir -p models/vae && wget -O models/vae/ae.safetensors https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/ae.safetensors
-RUN mkdir -p models/diffusion_models && wget -O models/diffusion_models/chroma-unlocked-v14.safetensors https://huggingface.co/lodestones/Chroma/resolve/main/chroma-unlocked-v14.safetensors
+RUN mkdir -p models/clip && aria2c -s 8 -x 8 -k 100M -o models/clip/t5xxl_fp16.safetensors https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors
+RUN mkdir -p models/vae && aria2c -s 8 -x 8 -k 100M -o models/vae/ae.safetensors https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/ae.safetensors
+RUN mkdir -p models/diffusion_models && aria2c -s 8 -x 8 -k 100M -o models/diffusion_models/chroma-unlocked-v14.safetensors https://huggingface.co/lodestones/Chroma/resolve/main/chroma-unlocked-v14.safetensors
 
 # Start container
 CMD ["/start.sh"]
