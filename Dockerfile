@@ -32,7 +32,6 @@ RUN /usr/bin/yes | comfy --workspace /comfyui install --cuda-version 11.8 --nvid
 # Change working directory to ComfyUI
 WORKDIR /comfyui
 
-RUN mkdir -p custom_nodes && git clone --depth=1 https://github.com/lodestone-rock/ComfyUI_FluxMod.git custom_nodes/ComfyUI_FluxMod
 
 # Install runpod
 RUN pip install runpod requests
@@ -53,26 +52,13 @@ ADD *snapshot*.json /
 # Restore the snapshot to install custom nodes
 RUN /restore_snapshot.sh
 
-# Start container
-CMD ["/start.sh"]
-
-# Stage 2: Download models
-FROM base as downloader
-
-ARG HUGGINGFACE_ACCESS_TOKEN
-ARG MODEL_TYPE
-
 # Change working directory to ComfyUI
 WORKDIR /comfyui
 
+RUN mkdir -p custom_nodes && git clone --depth=1 https://github.com/lodestone-rock/ComfyUI_FluxMod.git custom_nodes/ComfyUI_FluxMod
 RUN mkdir -p models/clip && wget -O models/clip/t5xxl_fp16.safetensors https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors
 RUN mkdir -p models/vae && wget -O models/vae/ae.safetensors https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/ae.safetensors
 RUN mkdir -p models/diffusion_models && wget -O models/diffusion_models/chroma-unlocked-v14.safetensors https://huggingface.co/lodestones/Chroma/resolve/main/chroma-unlocked-v14.safetensors
-# Stage 3: Final image
-FROM base as final
-
-# Copy models from stage 2 to the final image
-COPY --from=downloader /comfyui/models /comfyui/models
 
 # Start container
 CMD ["/start.sh"]
