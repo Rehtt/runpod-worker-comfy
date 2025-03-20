@@ -51,11 +51,10 @@ ADD *snapshot*.json /
 # Restore the snapshot to install custom nodes
 RUN /restore_snapshot.sh
 
-RUN comfy --workspace /comfyui node registry-install comfyui_fluxmod
-
 # Change working directory to ComfyUI
 WORKDIR /comfyui
 
+RUN git clone https://github.com/lodestone-rock/ComfyUI_FluxMod.git custom_nodes/ComfyUI_FluxMod
 RUN mkdir -p models/clip && aria2c -s 8 -x 8 -k 100M -o models/clip/t5xxl_fp16.safetensors https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors
 RUN mkdir -p models/vae && aria2c -s 8 -x 8 -k 100M -o models/vae/ae.safetensors https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/ae.safetensors
 RUN mkdir -p models/diffusion_models && aria2c -s 8 -x 8 -k 100M -o models/diffusion_models/chroma-unlocked-v14.safetensors https://huggingface.co/lodestones/Chroma/resolve/main/chroma-unlocked-v14.safetensors
