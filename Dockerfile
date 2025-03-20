@@ -18,10 +18,8 @@ RUN apt-get update && apt-get install -y \
   wget \
   libgl1 \
   && ln -sf /usr/bin/python3.10 /usr/bin/python \
-  && ln -sf /usr/bin/pip3 /usr/bin/pip
-
-# Clean up to reduce image size
-RUN apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+  && ln -sf /usr/bin/pip3 /usr/bin/pip \
+  && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install comfy-cli
 RUN pip install comfy-cli
@@ -52,10 +50,11 @@ ADD *snapshot*.json /
 # Restore the snapshot to install custom nodes
 RUN /restore_snapshot.sh
 
+RUN comfy --workspace /comfyui node registry-install comfyui_fluxmod
+
 # Change working directory to ComfyUI
 WORKDIR /comfyui
 
-RUN mkdir -p custom_nodes && git clone --depth=1 https://github.com/lodestone-rock/ComfyUI_FluxMod.git custom_nodes/ComfyUI_FluxMod
 RUN mkdir -p models/clip && wget -O models/clip/t5xxl_fp16.safetensors https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors
 RUN mkdir -p models/vae && wget -O models/vae/ae.safetensors https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/ae.safetensors
 RUN mkdir -p models/diffusion_models && wget -O models/diffusion_models/chroma-unlocked-v14.safetensors https://huggingface.co/lodestones/Chroma/resolve/main/chroma-unlocked-v14.safetensors
