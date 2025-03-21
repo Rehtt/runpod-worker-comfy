@@ -8,6 +8,7 @@ import os
 import requests
 import base64
 from io import BytesIO
+import lzma
 
 # Time to wait between API check attempts in milliseconds
 COMFY_API_AVAILABLE_INTERVAL_MS = 50
@@ -196,7 +197,11 @@ def base64_encode(img_path):
         str: The base64 encoded image
     """
     with open(img_path, "rb") as image_file:
-        encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
+        image = image_file.read()
+        if os.environ.get("IMAGE_XZ_COMPRESSION", False):
+            image = lzma.compress(image)
+
+        encoded_string = base64.b64encode(image).decode("utf-8")
         return f"{encoded_string}"
 
 

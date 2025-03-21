@@ -17,11 +17,10 @@ RUN apt-get update && apt-get install -y \
   git \
   wget \
   libgl1 \
+  aria2 \
   && ln -sf /usr/bin/python3.10 /usr/bin/python \
-  && ln -sf /usr/bin/pip3 /usr/bin/pip
-
-# Clean up to reduce image size
-RUN apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+  && ln -sf /usr/bin/pip3 /usr/bin/pip \
+  && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 
 # Install comfy-cli
 RUN pip install comfy-cli
@@ -32,7 +31,6 @@ RUN /usr/bin/yes | comfy --workspace /comfyui install --cuda-version 11.8 --nvid
 # Change working directory to ComfyUI
 WORKDIR /comfyui
 
-RUN mkdir -p custom_nodes && git clone --depth=1 https://github.com/lodestone-rock/ComfyUI_FluxMod.git custom_nodes/ComfyUI_FluxMod
 
 # Install runpod
 RUN pip install runpod requests
@@ -53,26 +51,13 @@ ADD *snapshot*.json /
 # Restore the snapshot to install custom nodes
 RUN /restore_snapshot.sh
 
-# Start container
-CMD ["/start.sh"]
-
-# Stage 2: Download models
-FROM base as downloader
-
-ARG HUGGINGFACE_ACCESS_TOKEN
-ARG MODEL_TYPE
-
 # Change working directory to ComfyUI
 WORKDIR /comfyui
 
-RUN mkdir -p models/clip && wget -O models/clip/t5xxl_fp16.safetensors https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors
-RUN mkdir -p models/vae && wget -O models/vae/ae.safetensors https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/ae.safetensors
-RUN mkdir -p models/diffusion_models && wget -O models/diffusion_models/chroma-unlocked-v14.safetensors https://huggingface.co/lodestones/Chroma/resolve/main/chroma-unlocked-v14.safetensors
-# Stage 3: Final image
-FROM base as final
-
-# Copy models from stage 2 to the final image
-COPY --from=downloader /comfyui/models /comfyui/models
+RUN git clone https://github.com/lodestone-rock/ComfyUI_FluxMod.git custom_nodes/ComfyUI_FluxMod
+RUN mkdir -p models/clip && aria2c -s 8 -x 8 -k 100M -o models/clip/t5xxl_fp16.safetensors https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp16.safetensors
+RUN mkdir -p models/vae && aria2c -s 8 -x 8 -k 100M -o models/vae/ae.safetensors https://huggingface.co/black-forest-labs/FLUX.1-schnell/resolve/main/ae.safetensors
+RUN mkdir -p models/diffusion_models && aria2c -s 8 -x 8 -k 100M -o models/diffusion_models/chroma-unlocked-v14.safetensors https://huggingface.co/lodestones/Chroma/resolve/main/chroma-unlocked-v14.safetensors
 
 # Start container
 CMD ["/start.sh"]
